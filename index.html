@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korean Study</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a24;
+    --surface2: #232333;
+    --border: #2e2e45;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --text: #e8e8f0;
+    --muted: #7878a0;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #facc15;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  nav h1 { font-size: 1.1rem; color: var(--accent); margin-right: auto; }
+  nav h1 span { color: var(--accent2); }
+  .nav-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* SECTIONS */
+  .section { display: none; padding: 32px 24px; max-width: 960px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  h2 { font-size: 1.5rem; margin-bottom: 6px; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+
+  /* HANGUL */
+  .hangul-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .hangul-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .hangul-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .hangul-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .hangul-card .char { font-size: 2.2rem; line-height: 1; }
+  .hangul-card .rom { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+  .hangul-card .meaning { font-size: 0.72rem; color: var(--accent2); margin-top: 2px; display: none; }
+  .hangul-card.revealed .meaning { display: block; }
+  .hangul-card.revealed .rom { color: var(--green); }
+
+  /* VOCAB */
+  .vocab-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .vocab-controls select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .vocab-controls select:focus { outline: none; border-color: var(--accent); }
+
+  .flashcard-wrap {
+    perspective: 1000px;
+    width: 100%;
+    max-width: 420px;
+    height: 220px;
+    margin: 0 auto 28px;
+    cursor: pointer;
+  }
+  .flashcard {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card-face.back { transform: rotateY(180deg); background: var(--surface2); }
+  .card-korean { font-size: 3rem; }
+  .card-hint { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  .card-english { font-size: 1.6rem; font-weight: 600; }
+  .card-romanized { font-size: 0.95rem; color: var(--accent); margin-top: 6px; }
+  .card-example { font-size: 0.8rem; color: var(--muted); margin-top: 10px; text-align: center; }
+
+  .card-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .card-nav button {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .card-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .card-counter { color: var(--muted); font-size: 0.9rem; min-width: 80px; text-align: center; }
+
+  .card-actions { display: flex; gap: 12px; justify-content: center; }
+  .btn-wrong {
+    background: none; border: 1px solid var(--red);
+    color: var(--red); padding: 8px 24px;
+    border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+  }
+  .btn-wrong:hover { background: var(--red); color: #fff; }
+  .btn-right {
+    background: none; border: 1px solid var(--green);
+    color: var(--green); padding: 8px 24px;
+    border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+  }
+  .btn-right:hover { background: var(--green); color: #000; }
+  .btn-shuffle {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 18px;
+    border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+  }
+  .btn-shuffle:hover { border-color: var(--accent); color: var(--accent); }
+
+  .progress-bar-wrap { background: var(--surface2); border-radius: 4px; height: 6px; margin-bottom: 8px; }
+  .progress-bar { height: 6px; border-radius: 4px; background: var(--accent); transition: width 0.3s; }
+  .progress-label { font-size: 0.8rem; color: var(--muted); text-align: right; margin-bottom: 20px; }
+
+  /* GRAMMAR */
+  .grammar-list { display: flex; flex-direction: column; gap: 16px; }
+  .grammar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .grammar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .grammar-header:hover { background: var(--surface2); }
+  .grammar-header h3 { font-size: 1rem; }
+  .grammar-header .tag {
+    font-size: 0.72rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-left: 10px;
+  }
+  .grammar-header .arrow { color: var(--muted); transition: transform 0.3s; }
+  .grammar-header.open .arrow { transform: rotate(180deg); }
+  .grammar-body { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border); }
+  .grammar-body.open { display: block; }
+  .grammar-body p { color: var(--muted); font-size: 0.9rem; margin-top: 12px; line-height: 1.6; }
+  .grammar-body .structure {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 12px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+  .examples-table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 0.875rem; }
+  .examples-table th {
+    text-align: left; color: var(--muted); font-weight: 500;
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+  }
+  .examples-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .examples-table tr:last-child td { border-bottom: none; }
+  .examples-table .kr { color: var(--accent2); font-size: 1rem; }
+  .examples-table .rom { color: var(--accent); }
+
+  /* QUIZ */
+  .quiz-section { margin-top: 32px; }
+  .quiz-section h3 { font-size: 1rem; margin-bottom: 14px; color: var(--muted); }
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .quiz-question { font-size: 2rem; margin-bottom: 20px; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quiz-opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .quiz-opt:hover:not(:disabled) { border-color: var(--accent); }
+  .quiz-opt.correct { background: #0d2e1c; border-color: var(--green); color: var(--green); }
+  .quiz-opt.wrong { background: #2e0d0d; border-color: var(--red); color: var(--red); }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-feedback { margin-top: 16px; font-size: 0.9rem; min-height: 24px; }
+  .quiz-next {
+    margin-top: 14px;
+    background: var(--accent); border: none; color: #fff;
+    padding: 10px 28px; border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; display: none;
+  }
+  .quiz-score { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+
+  /* AUTH MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.hidden { display: none; }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%; max-width: 380px;
+  }
+  .auth-card h2 { text-align: center; margin-bottom: 24px; font-size: 1.3rem; }
+  .auth-tabs { display: flex; gap: 4px; background: var(--surface2); padding: 4px; border-radius: 8px; margin-bottom: 24px; }
+  .auth-tab { flex: 1; padding: 8px; border: none; background: none; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; }
+  .auth-tab.active { background: var(--accent); color: #fff; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; }
+  .form-group input {
+    width: 100%; padding: 10px 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 0.9rem;
+  }
+  .form-group input:focus { outline: none; border-color: var(--accent); }
+  .btn-primary {
+    width: 100%; padding: 11px; margin-top: 4px;
+    background: var(--accent); border: none; border-radius: 8px;
+    color: #fff; font-size: 0.95rem; cursor: pointer; margin-bottom: 12px;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-google {
+    width: 100%; padding: 10px;
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    color: #333; font-size: 0.875rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background 0.2s;
+  }
+  .btn-google:hover { background: #f5f5f5; }
+  .auth-divider { text-align: center; color: var(--muted); font-size: 0.78rem; margin: 12px 0; }
+  .auth-error { color: var(--red); font-size: 0.82rem; margin-top: 8px; min-height: 18px; }
+
+  /* NAV USER */
+  .nav-user { display: flex; align-items: center; gap: 10px; }
+  .nav-user-name { font-size: 0.82rem; color: var(--muted); }
+  .btn-logout {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.78rem;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* SCORE HISTORY */
+  .score-history { margin-top: 32px; }
+  .score-history h3 { font-size: 0.95rem; margin-bottom: 14px; color: var(--muted); }
+  .score-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .score-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .score-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-pct { font-weight: 600; }
+  .score-pct.good { color: var(--green); }
+  .score-pct.ok { color: var(--yellow); }
+  .score-pct.bad { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay hidden" id="auth-modal">
+  <div class="auth-card">
+    <h2>한국어 Study</h2>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login', this)">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register', this)">Register</button>
+    </div>
+    <div id="auth-login">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="auth-divider">or</div>
+      <button class="btn-google" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-error" id="login-error"></div>
+    </div>
+    <div id="auth-register" style="display:none">
+      <div class="form-group">
+        <label>Name (optional)</label>
+        <input type="text" id="reg-name" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      <div class="auth-divider">or</div>
+      <button class="btn-google" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-error" id="reg-error"></div>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <h1>한국어 <span>Study</span></h1>
+  <button class="nav-btn active" onclick="showSection('hangul', this)">Hangul</button>
+  <button class="nav-btn" onclick="showSection('vocab', this)">Vocabulary</button>
+  <button class="nav-btn" onclick="showSection('grammar', this)">Grammar</button>
+  <button class="nav-btn" onclick="showSection('quiz', this)">Quiz</button>
+  <div class="nav-user" id="nav-user" style="display:none">
+    <span class="nav-user-name" id="nav-user-name"></span>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ HANGUL ═══════════════════════════ -->
+<div id="hangul" class="section active">
+  <h2>Hangul — 한글</h2>
+  <p class="subtitle">Click a character to reveal its romanization and sound description</p>
+  <div class="hangul-tabs">
+    <button class="tab-btn active" onclick="showHangulTab('vowels', this)">Vowels (모음)</button>
+    <button class="tab-btn" onclick="showHangulTab('consonants', this)">Consonants (자음)</button>
+    <button class="tab-btn" onclick="showHangulTab('double', this)">Double (쌍자음)</button>
+  </div>
+  <div id="hangul-grid" class="hangul-grid"></div>
+</div>
+
+<!-- ═══════════════════════════ VOCAB ═══════════════════════════ -->
+<div id="vocab" class="section">
+  <h2>Vocabulary — 어휘</h2>
+  <p class="subtitle">Flip cards to reveal meaning. Mark each card to track progress.</p>
+  <div class="vocab-controls">
+    <select id="category-select" onchange="loadDeck()">
+      <option value="greetings">Greetings</option>
+      <option value="numbers">Numbers</option>
+      <option value="colors">Colors</option>
+      <option value="days">Days of the Week</option>
+      <option value="food">Food</option>
+      <option value="family">Family</option>
+      <option value="time">Time &amp; Location</option>
+      <option value="verbs">Verbs</option>
+      <option value="adjectives">Adjectives</option>
+      <option value="body">Body Parts</option>
+      <option value="weather">Weather &amp; Seasons</option>
+      <option value="nature">Nature</option>
+      <option value="places">Places</option>
+      <option value="transport">Transportation</option>
+      <option value="clothing">Clothing</option>
+      <option value="home">Home &amp; Objects</option>
+      <option value="emotions">Emotions</option>
+      <option value="animals">Animals</option>
+      <option value="society">Society &amp; Culture</option>
+      <option value="questions">Question Words</option>
+      <option value="expressions">Common Expressions</option>
+      <option value="daily">Daily Life</option>
+    </select>
+    <button class="btn-shuffle" onclick="shuffleDeck()">⇄ Shuffle</button>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+  <div class="progress-label" id="progress-label">0 / 0 known</div>
+  <div class="flashcard-wrap" onclick="flipCard()">
+    <div class="flashcard" id="flashcard">
+      <div class="card-face front">
+        <div class="card-korean" id="card-korean">—</div>
+        <div class="card-hint">tap to flip</div>
+      </div>
+      <div class="card-face back">
+        <div class="card-english" id="card-english">—</div>
+        <div class="card-romanized" id="card-romanized">—</div>
+        <div class="card-example" id="card-example"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card-nav">
+    <button onclick="prevCard()">‹</button>
+    <span class="card-counter" id="card-counter">0 / 0</span>
+    <button onclick="nextCard()">›</button>
+  </div>
+  <div class="card-actions">
+    <button class="btn-wrong" onclick="markCard(false)">✗ Still learning</button>
+    <button class="btn-right" onclick="markCard(true)">✓ Got it</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ GRAMMAR ═══════════════════════════ -->
+<div id="grammar" class="section">
+  <h2>Grammar — 문법</h2>
+  <p class="subtitle">Essential patterns for building Korean sentences</p>
+  <div class="grammar-list" id="grammar-list"></div>
+</div>
+
+<!-- ═══════════════════════════ QUIZ ═══════════════════════════ -->
+<div id="quiz" class="section">
+  <h2>Quiz — 퀴즈</h2>
+  <p class="subtitle">Test your knowledge across all vocabulary</p>
+  <div class="vocab-controls">
+    <select id="quiz-category">
+      <option value="all">All categories</option>
+      <option value="greetings">Greetings</option>
+      <option value="numbers">Numbers</option>
+      <option value="colors">Colors</option>
+      <option value="days">Days</option>
+      <option value="food">Food</option>
+      <option value="family">Family</option>
+      <option value="time">Time &amp; Location</option>
+      <option value="verbs">Verbs</option>
+      <option value="adjectives">Adjectives</option>
+      <option value="body">Body Parts</option>
+      <option value="weather">Weather &amp; Seasons</option>
+      <option value="nature">Nature</option>
+      <option value="places">Places</option>
+      <option value="transport">Transportation</option>
+      <option value="clothing">Clothing</option>
+      <option value="home">Home &amp; Objects</option>
+      <option value="emotions">Emotions</option>
+      <option value="animals">Animals</option>
+      <option value="society">Society &amp; Culture</option>
+      <option value="questions">Question Words</option>
+      <option value="expressions">Common Expressions</option>
+      <option value="daily">Daily Life</option>
+    </select>
+    <select id="quiz-direction">
+      <option value="kr-en">Korean → English</option>
+      <option value="en-kr">English → Korean</option>
+    </select>
+    <button class="btn-shuffle" onclick="startQuiz()">New Quiz</button>
+  </div>
+  <div class="quiz-card">
+    <div class="quiz-question" id="quiz-question">Press "New Quiz" to start</div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+    <button class="quiz-next" id="quiz-next" onclick="nextQuizQuestion()">Next →</button>
+    <div class="quiz-score" id="quiz-score"></div>
+  </div>
+  <div class="score-history" id="score-history" style="display:none">
+    <h3>Recent Scores</h3>
+    <table class="score-table">
+      <thead><tr><th>Category</th><th>Score</th><th>Direction</th><th>Date</th></tr></thead>
+      <tbody id="score-history-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const API_URL = 'http://localhost:8000';
+
+// ══════════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════════
+
+const HANGUL = {
+  vowels: [
+    { char: 'ㅏ', rom: 'a',   meaning: 'like "ah"' },
+    { char: 'ㅑ', rom: 'ya',  meaning: 'like "yah"' },
+    { char: 'ㅓ', rom: 'eo',  meaning: 'like "uh"' },
+    { char: 'ㅕ', rom: 'yeo', meaning: 'like "yuh"' },
+    { char: 'ㅗ', rom: 'o',   meaning: 'like "oh"' },
+    { char: 'ㅛ', rom: 'yo',  meaning: 'like "yo"' },
+    { char: 'ㅜ', rom: 'u',   meaning: 'like "oo"' },
+    { char: 'ㅠ', rom: 'yu',  meaning: 'like "you"' },
+    { char: 'ㅡ', rom: 'eu',  meaning: 'like "er" (no lips)' },
+    { char: 'ㅣ', rom: 'i',   meaning: 'like "ee"' },
+    { char: 'ㅐ', rom: 'ae',  meaning: 'like "eh"' },
+    { char: 'ㅔ', rom: 'e',   meaning: 'like "eh" (same as ㅐ)' },
+    { char: 'ㅒ', rom: 'yae', meaning: 'like "yeh"' },
+    { char: 'ㅖ', rom: 'ye',  meaning: 'like "yeh"' },
+    { char: 'ㅘ', rom: 'wa',  meaning: 'ㅗ + ㅏ' },
+    { char: 'ㅙ', rom: 'wae', meaning: 'ㅗ + ㅐ' },
+    { char: 'ㅚ', rom: 'oe',  meaning: 'ㅗ + ㅣ' },
+    { char: 'ㅝ', rom: 'wo',  meaning: 'ㅜ + ㅓ' },
+    { char: 'ㅞ', rom: 'we',  meaning: 'ㅜ + ㅔ' },
+    { char: 'ㅟ', rom: 'wi',  meaning: 'ㅜ + ㅣ' },
+    { char: 'ㅢ', rom: 'ui',  meaning: 'ㅡ + ㅣ' },
+  ],
+  consonants: [
+    { char: 'ㄱ', rom: 'g/k',  meaning: 'soft g (start), k (end)' },
+    { char: 'ㄴ', rom: 'n',    meaning: 'like "n"' },
+    { char: 'ㄷ', rom: 'd/t',  meaning: 'soft d (start), t (end)' },
+    { char: 'ㄹ', rom: 'r/l',  meaning: 'flap r (start), l (end)' },
+    { char: 'ㅁ', rom: 'm',    meaning: 'like "m"' },
+    { char: 'ㅂ', rom: 'b/p',  meaning: 'soft b (start), p (end)' },
+    { char: 'ㅅ', rom: 's',    meaning: 'like "s"' },
+    { char: 'ㅇ', rom: 'silent/ng', meaning: 'silent start, ng end' },
+    { char: 'ㅈ', rom: 'j',    meaning: 'like "j"' },
+    { char: 'ㅊ', rom: 'ch',   meaning: 'aspirated "ch"' },
+    { char: 'ㅋ', rom: 'k',    meaning: 'aspirated "k"' },
+    { char: 'ㅌ', rom: 't',    meaning: 'aspirated "t"' },
+    { char: 'ㅍ', rom: 'p',    meaning: 'aspirated "p"' },
+    { char: 'ㅎ', rom: 'h',    meaning: 'like "h"' },
+  ],
+  double: [
+    { char: 'ㄲ', rom: 'kk',  meaning: 'tense g/k (no air)' },
+    { char: 'ㄸ', rom: 'tt',  meaning: 'tense d/t (no air)' },
+    { char: 'ㅃ', rom: 'pp',  meaning: 'tense b/p (no air)' },
+    { char: 'ㅆ', rom: 'ss',  meaning: 'tense s (no air)' },
+    { char: 'ㅉ', rom: 'jj',  meaning: 'tense j (no air)' },
+  ],
+};
+
+const VOCAB = {
+  greetings: [
+    { kr: '안녕하세요', rom: 'annyeonghaseyo', en: 'Hello (formal)', ex: '안녕하세요! → Hello!' },
+    { kr: '안녕', rom: 'annyeong', en: 'Hi / Bye (informal)', ex: 'Used with close friends' },
+    { kr: '감사합니다', rom: 'gamsahamnida', en: 'Thank you (formal)', ex: '감사합니다! → Thank you!' },
+    { kr: '고마워', rom: 'gomawo', en: 'Thanks (informal)', ex: 'Used with friends' },
+    { kr: '죄송합니다', rom: 'joesonghamnida', en: 'I\'m sorry (formal)', ex: '죄송합니다 → I\'m very sorry' },
+    { kr: '미안해', rom: 'mianhae', en: 'Sorry (informal)', ex: 'Used with friends' },
+    { kr: '괜찮아요', rom: 'gwaenchanayo', en: 'It\'s okay / Are you okay?', ex: '괜찮아요? → Are you okay?' },
+    { kr: '네', rom: 'ne', en: 'Yes', ex: '네, 맞아요 → Yes, that\'s right' },
+    { kr: '아니요', rom: 'aniyo', en: 'No', ex: '아니요, 괜찮아요 → No, it\'s okay' },
+    { kr: '잘 지내요?', rom: 'jal jinaeyo?', en: 'How are you?', ex: '잘 지내요? → How are you doing?' },
+    { kr: '잘 지내요', rom: 'jal jinaeyo', en: 'I\'m doing well', ex: 'Response to 잘 지내요?' },
+    { kr: '만나서 반가워요', rom: 'mannaseo bangawoyo', en: 'Nice to meet you', ex: 'Said when meeting someone' },
+  ],
+  numbers: [
+    { kr: '일', rom: 'il', en: '1 (Sino-Korean)', ex: '일월 → January' },
+    { kr: '이', rom: 'i', en: '2 (Sino-Korean)', ex: '이월 → February' },
+    { kr: '삼', rom: 'sam', en: '3 (Sino-Korean)', ex: '삼월 → March' },
+    { kr: '사', rom: 'sa', en: '4 (Sino-Korean)', ex: '사월 → April' },
+    { kr: '오', rom: 'o', en: '5 (Sino-Korean)', ex: '오월 → May' },
+    { kr: '육', rom: 'yuk', en: '6 (Sino-Korean)', ex: '육월 → June' },
+    { kr: '칠', rom: 'chil', en: '7 (Sino-Korean)', ex: '칠월 → July' },
+    { kr: '팔', rom: 'pal', en: '8 (Sino-Korean)', ex: '팔월 → August' },
+    { kr: '구', rom: 'gu', en: '9 (Sino-Korean)', ex: '구월 → September' },
+    { kr: '십', rom: 'sip', en: '10 (Sino-Korean)', ex: '십월 → October' },
+    { kr: '하나', rom: 'hana', en: '1 (Native Korean)', ex: '하나, 둘, 셋... → 1, 2, 3...' },
+    { kr: '둘', rom: 'dul', en: '2 (Native Korean)', ex: 'Used for counting objects' },
+    { kr: '셋', rom: 'set', en: '3 (Native Korean)', ex: 'Used for counting objects' },
+    { kr: '넷', rom: 'net', en: '4 (Native Korean)', ex: 'Used for counting objects' },
+    { kr: '다섯', rom: 'daseot', en: '5 (Native Korean)', ex: 'Used for counting objects' },
+    { kr: '백', rom: 'baek', en: '100', ex: '백 원 → 100 won' },
+    { kr: '천', rom: 'cheon', en: '1,000', ex: '천 원 → 1,000 won' },
+    { kr: '만', rom: 'man', en: '10,000', ex: '만 원 → 10,000 won' },
+  ],
+  colors: [
+    { kr: '빨간색', rom: 'ppalgansaek', en: 'Red', ex: '빨간 사과 → Red apple' },
+    { kr: '파란색', rom: 'paransaek', en: 'Blue', ex: '파란 하늘 → Blue sky' },
+    { kr: '노란색', rom: 'noransaek', en: 'Yellow', ex: '노란 바나나 → Yellow banana' },
+    { kr: '초록색', rom: 'choroksaek', en: 'Green', ex: '초록 나무 → Green tree' },
+    { kr: '흰색', rom: 'heunsaek', en: 'White', ex: '흰 눈 → White snow' },
+    { kr: '검은색', rom: 'geomeunsaek', en: 'Black', ex: '검은 고양이 → Black cat' },
+    { kr: '주황색', rom: 'juhwangsaek', en: 'Orange', ex: '주황색 당근 → Orange carrot' },
+    { kr: '보라색', rom: 'borasaek', en: 'Purple', ex: '보라색 꽃 → Purple flower' },
+    { kr: '분홍색', rom: 'bunhongsaek', en: 'Pink', ex: '분홍색 드레스 → Pink dress' },
+    { kr: '회색', rom: 'hoesaek', en: 'Gray', ex: '회색 구름 → Gray cloud' },
+  ],
+  days: [
+    { kr: '월요일', rom: 'woryoil', en: 'Monday', ex: '월요일에 만나요 → See you Monday' },
+    { kr: '화요일', rom: 'hwayoil', en: 'Tuesday', ex: '화 = fire element' },
+    { kr: '수요일', rom: 'suyoil', en: 'Wednesday', ex: '수 = water element' },
+    { kr: '목요일', rom: 'mogyoil', en: 'Thursday', ex: '목 = wood element' },
+    { kr: '금요일', rom: 'geumyoil', en: 'Friday', ex: '금 = metal/gold element' },
+    { kr: '토요일', rom: 'toyoil', en: 'Saturday', ex: '토 = earth element' },
+    { kr: '일요일', rom: 'iryoil', en: 'Sunday', ex: '일 = sun' },
+    { kr: '오늘', rom: 'oneul', en: 'Today', ex: '오늘이 무슨 요일이에요? → What day is today?' },
+    { kr: '어제', rom: 'eoje', en: 'Yesterday', ex: '어제 뭐 했어요? → What did you do yesterday?' },
+    { kr: '내일', rom: 'naeil', en: 'Tomorrow', ex: '내일 봐요 → See you tomorrow' },
+  ],
+  food: [
+    { kr: '밥', rom: 'bap', en: 'Rice / Meal', ex: '밥 먹었어요? → Did you eat?' },
+    { kr: '물', rom: 'mul', en: 'Water', ex: '물 주세요 → Water please' },
+    { kr: '커피', rom: 'keopi', en: 'Coffee', ex: '커피 한 잔 → One cup of coffee' },
+    { kr: '빵', rom: 'ppang', en: 'Bread', ex: '빵집 → Bakery' },
+    { kr: '고기', rom: 'gogi', en: 'Meat', ex: '소고기 → Beef, 돼지고기 → Pork' },
+    { kr: '김치', rom: 'kimchi', en: 'Kimchi', ex: 'Korea\'s most famous dish' },
+    { kr: '비빔밥', rom: 'bibimbap', en: 'Mixed rice dish', ex: '비빔밥 주세요 → Bibimbap please' },
+    { kr: '삼겹살', rom: 'samgyeopsal', en: 'Grilled pork belly', ex: 'Popular BBQ dish' },
+    { kr: '라면', rom: 'ramyeon', en: 'Ramen noodles', ex: '라면 끓여 먹자 → Let\'s make ramen' },
+    { kr: '떡볶이', rom: 'tteokbokki', en: 'Spicy rice cakes', ex: 'Popular street food' },
+    { kr: '맛있어요', rom: 'massisseoyo', en: 'It\'s delicious', ex: '정말 맛있어요! → So delicious!' },
+    { kr: '맵다', rom: 'maepda', en: 'Spicy', ex: '너무 매워요 → It\'s too spicy' },
+  ],
+  family: [
+    { kr: '가족', rom: 'gajok', en: 'Family', ex: '우리 가족 → My family' },
+    { kr: '엄마', rom: 'eomma', en: 'Mom', ex: '엄마, 사랑해 → Mom, I love you' },
+    { kr: '아빠', rom: 'appa', en: 'Dad', ex: '아빠, 보고 싶어 → Dad, I miss you' },
+    { kr: '오빠', rom: 'oppa', en: 'Older brother (female speaking)', ex: 'Used by girls for older males' },
+    { kr: '형', rom: 'hyeong', en: 'Older brother (male speaking)', ex: 'Used by boys for older males' },
+    { kr: '언니', rom: 'eonni', en: 'Older sister (female speaking)', ex: 'Used by girls for older females' },
+    { kr: '누나', rom: 'nuna', en: 'Older sister (male speaking)', ex: 'Used by boys for older females' },
+    { kr: '남동생', rom: 'namdongsaeng', en: 'Younger brother', ex: '남 = male' },
+    { kr: '여동생', rom: 'yeodongsaeng', en: 'Younger sister', ex: '여 = female' },
+    { kr: '친구', rom: 'chingu', en: 'Friend', ex: '내 친구 → My friend' },
+  ],
+  time: [
+    { kr: '지금', rom: 'jigeum', en: 'Now', ex: '지금 몇 시예요? → What time is it now?' },
+    { kr: '오전', rom: 'ojeon', en: 'AM / Morning', ex: '오전 9시 → 9 AM' },
+    { kr: '오후', rom: 'ohu', en: 'PM / Afternoon', ex: '오후 3시 → 3 PM' },
+    { kr: '시', rom: 'si', en: 'O\'clock / Hour', ex: '세 시 → Three o\'clock' },
+    { kr: '분', rom: 'bun', en: 'Minute', ex: '삼십 분 → 30 minutes' },
+    { kr: '여기', rom: 'yeogi', en: 'Here', ex: '여기 앉아요 → Sit here' },
+    { kr: '거기', rom: 'geogi', en: 'There', ex: '거기 가요 → Go there' },
+    { kr: '어디', rom: 'eodi', en: 'Where', ex: '화장실이 어디예요? → Where is the bathroom?' },
+    { kr: '위', rom: 'wi', en: 'Above / On top', ex: '책상 위 → On the desk' },
+    { kr: '아래', rom: 'arae', en: 'Below / Under', ex: '책상 아래 → Under the desk' },
+    { kr: '앞', rom: 'ap', en: 'In front of', ex: '학교 앞 → In front of school' },
+    { kr: '뒤', rom: 'dwi', en: 'Behind', ex: '집 뒤 → Behind the house' },
+  ],
+  verbs: [
+    { kr: '가다', rom: 'gada', en: 'To go', ex: '학교에 가요 → I go to school' },
+    { kr: '오다', rom: 'oda', en: 'To come', ex: '집에 와요 → Come home' },
+    { kr: '먹다', rom: 'meokda', en: 'To eat', ex: '밥을 먹어요 → I eat rice' },
+    { kr: '마시다', rom: 'masida', en: 'To drink', ex: '물을 마셔요 → I drink water' },
+    { kr: '하다', rom: 'hada', en: 'To do', ex: '뭐 해요? → What are you doing?' },
+    { kr: '있다', rom: 'itda', en: 'To have / To exist', ex: '시간이 있어요? → Do you have time?' },
+    { kr: '없다', rom: 'eopda', en: 'To not have / Not exist', ex: '시간이 없어요 → I have no time' },
+    { kr: '보다', rom: 'boda', en: 'To see / watch', ex: '영화 봐요 → I watch a movie' },
+    { kr: '알다', rom: 'alda', en: 'To know', ex: '알아요 → I know / I understand' },
+    { kr: '모르다', rom: 'moreuda', en: 'To not know', ex: '몰라요 → I don\'t know' },
+    { kr: '사랑하다', rom: 'saranghada', en: 'To love', ex: '사랑해요 → I love you' },
+    { kr: '공부하다', rom: 'gongbuhada', en: 'To study', ex: '한국어를 공부해요 → I study Korean' },
+    { kr: '말하다', rom: 'malhada', en: 'To speak / say', ex: '한국어로 말해요 → I speak in Korean' },
+    { kr: '듣다', rom: 'deutda', en: 'To listen / hear', ex: '음악을 들어요 → I listen to music' },
+    { kr: '읽다', rom: 'ikda', en: 'To read', ex: '책을 읽어요 → I read a book' },
+    { kr: '쓰다', rom: 'sseuda', en: 'To write', ex: '편지를 써요 → I write a letter' },
+    { kr: '자다', rom: 'jada', en: 'To sleep', ex: '일찍 자요 → I sleep early' },
+    { kr: '일어나다', rom: 'ireonada', en: 'To wake up / get up', ex: '7시에 일어나요 → I wake up at 7' },
+    { kr: '앉다', rom: 'anda', en: 'To sit', ex: '여기 앉아요 → Sit here' },
+    { kr: '서다', rom: 'seoda', en: 'To stand', ex: '일어서요 → Stand up' },
+    { kr: '걷다', rom: 'geotda', en: 'To walk', ex: '학교까지 걸어요 → I walk to school' },
+    { kr: '뛰다', rom: 'ttwida', en: 'To run', ex: '빨리 뛰어요 → I run fast' },
+    { kr: '사다', rom: 'sada', en: 'To buy', ex: '옷을 사요 → I buy clothes' },
+    { kr: '팔다', rom: 'palda', en: 'To sell', ex: '물건을 팔아요 → I sell things' },
+    { kr: '주다', rom: 'juda', en: 'To give', ex: '선물을 줘요 → I give a gift' },
+    { kr: '받다', rom: 'batda', en: 'To receive', ex: '선물을 받아요 → I receive a gift' },
+    { kr: '열다', rom: 'yeolda', en: 'To open', ex: '문을 열어요 → I open the door' },
+    { kr: '닫다', rom: 'datda', en: 'To close', ex: '문을 닫아요 → I close the door' },
+    { kr: '만들다', rom: 'mandeulda', en: 'To make', ex: '음식을 만들어요 → I make food' },
+    { kr: '찾다', rom: 'chatda', en: 'To find / look for', ex: '열쇠를 찾아요 → I look for my key' },
+    { kr: '좋아하다', rom: 'joahada', en: 'To like', ex: '한국어를 좋아해요 → I like Korean' },
+    { kr: '싫어하다', rom: 'sireohada', en: 'To dislike', ex: '매운 음식을 싫어해요 → I dislike spicy food' },
+    { kr: '생각하다', rom: 'saenggakhada', en: 'To think', ex: '어떻게 생각해요? → What do you think?' },
+    { kr: '느끼다', rom: 'neukkida', en: 'To feel', ex: '행복을 느껴요 → I feel happy' },
+    { kr: '원하다', rom: 'wonhada', en: 'To want', ex: '뭘 원해요? → What do you want?' },
+    { kr: '도와주다', rom: 'dowajuda', en: 'To help', ex: '도와줄게요 → I\'ll help you' },
+    { kr: '배우다', rom: 'baeuda', en: 'To learn', ex: '한국어를 배워요 → I learn Korean' },
+    { kr: '가르치다', rom: 'gareuchida', en: 'To teach', ex: '영어를 가르쳐요 → I teach English' },
+    { kr: '일하다', rom: 'ilhada', en: 'To work', ex: '열심히 일해요 → I work hard' },
+    { kr: '만나다', rom: 'mannada', en: 'To meet', ex: '친구를 만나요 → I meet a friend' },
+    { kr: '기다리다', rom: 'gidarida', en: 'To wait', ex: '버스를 기다려요 → I wait for the bus' },
+    { kr: '보내다', rom: 'bonaeda', en: 'To send', ex: '이메일을 보내요 → I send an email' },
+    { kr: '웃다', rom: 'utda', en: 'To laugh / smile', ex: '재미있어서 웃어요 → I laugh because it\'s funny' },
+    { kr: '울다', rom: 'ulda', en: 'To cry', ex: '슬퍼서 울어요 → I cry because I\'m sad' },
+    { kr: '요리하다', rom: 'yorihada', en: 'To cook', ex: '저녁을 요리해요 → I cook dinner' },
+    { kr: '운동하다', rom: 'undonghada', en: 'To exercise', ex: '매일 운동해요 → I exercise every day' },
+    { kr: '여행하다', rom: 'yeohaenghada', en: 'To travel', ex: '한국을 여행해요 → I travel Korea' },
+    { kr: '시작하다', rom: 'sijakhada', en: 'To start', ex: '수업이 시작해요 → Class starts' },
+    { kr: '끝나다', rom: 'kkeutnada', en: 'To finish / end', ex: '일이 끝났어요 → Work is done' },
+    { kr: '살다', rom: 'salda', en: 'To live', ex: '서울에서 살아요 → I live in Seoul' },
+    { kr: '믿다', rom: 'mitda', en: 'To believe / trust', ex: '나를 믿어요 → Trust me' },
+    { kr: '전화하다', rom: 'jeonhwahada', en: 'To call (phone)', ex: '나중에 전화해요 → Call me later' },
+    { kr: '결혼하다', rom: 'gyeolhonhada', en: 'To get married', ex: '결혼했어요 → I got married' },
+    { kr: '부르다', rom: 'bureuda', en: 'To call / sing', ex: '노래를 불러요 → I sing a song' },
+    { kr: '태어나다', rom: 'taeeonada', en: 'To be born', ex: '서울에서 태어났어요 → I was born in Seoul' },
+    { kr: '죽다', rom: 'jukda', en: 'To die', ex: '꽃이 죽었어요 → The flower died' },
+    { kr: '가져오다', rom: 'gajyeooda', en: 'To bring', ex: '물 가져와요 → Bring water' },
+    { kr: '놓다', rom: 'nota', en: 'To put / place', ex: '여기 놓아요 → Put it here' },
+    { kr: '씻다', rom: 'ssitda', en: 'To wash', ex: '손을 씻어요 → I wash my hands' },
+    { kr: '입다', rom: 'ipda', en: 'To wear (clothes)', ex: '뭐 입을까요? → What should I wear?' },
+    { kr: '타다', rom: 'tada', en: 'To ride / board', ex: '버스를 타요 → I ride the bus' },
+    { kr: '내리다', rom: 'naerida', en: 'To get off', ex: '다음 역에서 내려요 → I get off at the next stop' },
+  ],
+  adjectives: [
+    { kr: '크다', rom: 'keuda', en: 'Big / large', ex: '집이 커요 → The house is big' },
+    { kr: '작다', rom: 'jakda', en: 'Small / little', ex: '방이 작아요 → The room is small' },
+    { kr: '좋다', rom: 'jota', en: 'Good / nice', ex: '날씨가 좋아요 → The weather is nice' },
+    { kr: '나쁘다', rom: 'nappeuda', en: 'Bad', ex: '기분이 나빠요 → I feel bad' },
+    { kr: '많다', rom: 'manta', en: 'Many / much', ex: '사람이 많아요 → There are many people' },
+    { kr: '적다', rom: 'jeokda', en: 'Few / little', ex: '시간이 적어요 → There is little time' },
+    { kr: '길다', rom: 'gilda', en: 'Long', ex: '머리가 길어요 → The hair is long' },
+    { kr: '짧다', rom: 'jjalda', en: 'Short', ex: '바지가 짧아요 → The pants are short' },
+    { kr: '높다', rom: 'nopda', en: 'High / tall', ex: '산이 높아요 → The mountain is tall' },
+    { kr: '낮다', rom: 'natda', en: 'Low', ex: '천장이 낮아요 → The ceiling is low' },
+    { kr: '빠르다', rom: 'ppareuda', en: 'Fast / quick', ex: '버스가 빨라요 → The bus is fast' },
+    { kr: '느리다', rom: 'neurida', en: 'Slow', ex: '거북이는 느려요 → The turtle is slow' },
+    { kr: '쉽다', rom: 'swipda', en: 'Easy', ex: '한국어가 쉬워요? → Is Korean easy?' },
+    { kr: '어렵다', rom: 'eoryeopda', en: 'Difficult / hard', ex: '시험이 어려워요 → The test is hard' },
+    { kr: '재미있다', rom: 'jaemiitda', en: 'Interesting / fun', ex: '영화가 재미있어요 → The movie is fun' },
+    { kr: '재미없다', rom: 'jaemieopda', en: 'Boring', ex: '수업이 재미없어요 → Class is boring' },
+    { kr: '아름답다', rom: 'areumdapda', en: 'Beautiful', ex: '경치가 아름다워요 → The scenery is beautiful' },
+    { kr: '예쁘다', rom: 'yeppeuda', en: 'Pretty', ex: '꽃이 예뻐요 → The flower is pretty' },
+    { kr: '바쁘다', rom: 'bappeuda', en: 'Busy', ex: '요즘 바빠요 → I\'m busy these days' },
+    { kr: '피곤하다', rom: 'pigonhada', en: 'Tired', ex: '일이 많아서 피곤해요 → I\'m tired from work' },
+    { kr: '배고프다', rom: 'baegopeuda', en: 'Hungry', ex: '배고파요! → I\'m hungry!' },
+    { kr: '배부르다', rom: 'baebureuda', en: 'Full (after eating)', ex: '배불러요 → I\'m full' },
+    { kr: '행복하다', rom: 'haengbokhada', en: 'Happy', ex: '지금 정말 행복해요 → I\'m really happy now' },
+    { kr: '중요하다', rom: 'jungyohada', en: 'Important', ex: '건강이 중요해요 → Health is important' },
+    { kr: '깨끗하다', rom: 'kkaekkeutada', en: 'Clean', ex: '방이 깨끗해요 → The room is clean' },
+    { kr: '더럽다', rom: 'deoropda', en: 'Dirty', ex: '옷이 더러워요 → The clothes are dirty' },
+    { kr: '조용하다', rom: 'joyonghada', en: 'Quiet', ex: '도서관은 조용해요 → The library is quiet' },
+    { kr: '시끄럽다', rom: 'sikkeureopda', en: 'Noisy / loud', ex: '음악이 시끄러워요 → The music is loud' },
+    { kr: '무겁다', rom: 'mugeopda', en: 'Heavy', ex: '가방이 무거워요 → The bag is heavy' },
+    { kr: '가볍다', rom: 'gabyeopda', en: 'Light (weight)', ex: '노트북이 가벼워요 → The laptop is light' },
+    { kr: '새롭다', rom: 'saeropda', en: 'New / novel', ex: '새로운 시작이에요 → It\'s a new beginning' },
+    { kr: '오래되다', rom: 'oraedoeda', en: 'Old (things)', ex: '오래된 건물이에요 → It\'s an old building' },
+    { kr: '젊다', rom: 'jeomda', en: 'Young', ex: '젊은 사람들이 많아요 → There are many young people' },
+    { kr: '늙다', rom: 'neukda', en: 'Old (people)', ex: '할머니가 많이 늙었어요 → Grandma has aged a lot' },
+    { kr: '힘들다', rom: 'himdeulda', en: 'Hard / exhausting', ex: '일이 힘들어요 → Work is exhausting' },
+  ],
+  body: [
+    { kr: '몸', rom: 'mom', en: 'Body', ex: '몸이 아파요 → My body hurts' },
+    { kr: '머리', rom: 'meori', en: 'Head / hair', ex: '머리가 아파요 → I have a headache' },
+    { kr: '얼굴', rom: 'eolgul', en: 'Face', ex: '얼굴이 예뻐요 → The face is pretty' },
+    { kr: '눈', rom: 'nun', en: 'Eye(s)', ex: '눈이 커요 → The eyes are big' },
+    { kr: '코', rom: 'ko', en: 'Nose', ex: '코가 막혔어요 → My nose is stuffy' },
+    { kr: '입', rom: 'ip', en: 'Mouth', ex: '입을 벌려요 → Open your mouth' },
+    { kr: '귀', rom: 'gwi', en: 'Ear(s)', ex: '귀가 아파요 → My ears hurt' },
+    { kr: '목', rom: 'mok', en: 'Neck / throat', ex: '목이 아파요 → My throat hurts' },
+    { kr: '어깨', rom: 'eokkae', en: 'Shoulder', ex: '어깨가 아파요 → My shoulder hurts' },
+    { kr: '팔', rom: 'pal', en: 'Arm', ex: '팔을 들어요 → Raise your arm' },
+    { kr: '손', rom: 'son', en: 'Hand', ex: '손을 씻어요 → Wash your hands' },
+    { kr: '손가락', rom: 'songarak', en: 'Finger', ex: '손가락이 열 개예요 → There are 10 fingers' },
+    { kr: '배', rom: 'bae', en: 'Stomach / belly', ex: '배가 아파요 → My stomach hurts' },
+    { kr: '가슴', rom: 'gaseum', en: 'Chest', ex: '가슴이 두근거려요 → My heart is pounding' },
+    { kr: '등', rom: 'deung', en: 'Back', ex: '등이 아파요 → My back hurts' },
+    { kr: '다리', rom: 'dari', en: 'Leg', ex: '다리가 피곤해요 → My legs are tired' },
+    { kr: '무릎', rom: 'mureup', en: 'Knee', ex: '무릎이 아파요 → My knee hurts' },
+    { kr: '발', rom: 'bal', en: 'Foot', ex: '발이 아파요 → My foot hurts' },
+    { kr: '심장', rom: 'simjang', en: 'Heart', ex: '심장이 빠르게 뛰어요 → Heart is beating fast' },
+    { kr: '피부', rom: 'pibu', en: 'Skin', ex: '피부가 부드러워요 → The skin is soft' },
+    { kr: '뼈', rom: 'ppyeo', en: 'Bone', ex: '뼈가 부러졌어요 → The bone is broken' },
+    { kr: '피', rom: 'pi', en: 'Blood', ex: '피가 나요 → I\'m bleeding' },
+    { kr: '이', rom: 'i', en: 'Teeth', ex: '이를 닦아요 → I brush my teeth' },
+  ],
+  weather: [
+    { kr: '날씨', rom: 'nalssi', en: 'Weather', ex: '날씨가 어때요? → How\'s the weather?' },
+    { kr: '맑다', rom: 'makda', en: 'Clear / sunny', ex: '오늘 날씨가 맑아요 → It\'s clear today' },
+    { kr: '흐리다', rom: 'heurida', en: 'Cloudy / overcast', ex: '하늘이 흐려요 → The sky is cloudy' },
+    { kr: '비', rom: 'bi', en: 'Rain', ex: '비가 와요 → It\'s raining' },
+    { kr: '눈', rom: 'nun', en: 'Snow', ex: '눈이 내려요 → It\'s snowing' },
+    { kr: '바람', rom: 'baram', en: 'Wind', ex: '바람이 불어요 → The wind is blowing' },
+    { kr: '안개', rom: 'angae', en: 'Fog', ex: '안개가 껴요 → It\'s foggy' },
+    { kr: '번개', rom: 'beongae', en: 'Lightning', ex: '번개가 쳐요 → Lightning is striking' },
+    { kr: '천둥', rom: 'cheondung', en: 'Thunder', ex: '천둥 소리가 나요 → There\'s thunder' },
+    { kr: '태풍', rom: 'taepung', en: 'Typhoon', ex: '태풍이 온대요 → A typhoon is coming' },
+    { kr: '덥다', rom: 'deopda', en: 'Hot (weather)', ex: '오늘 너무 더워요 → It\'s so hot today' },
+    { kr: '춥다', rom: 'chupda', en: 'Cold (weather)', ex: '겨울에는 추워요 → It\'s cold in winter' },
+    { kr: '따뜻하다', rom: 'ttatteuthada', en: 'Warm', ex: '봄은 따뜻해요 → Spring is warm' },
+    { kr: '시원하다', rom: 'siwonhada', en: 'Cool / refreshing', ex: '바람이 시원해요 → The breeze is cool' },
+    { kr: '습하다', rom: 'seupada', en: 'Humid', ex: '여름은 습해요 → Summer is humid' },
+    { kr: '봄', rom: 'bom', en: 'Spring', ex: '봄에 꽃이 피어요 → Flowers bloom in spring' },
+    { kr: '여름', rom: 'yeoreum', en: 'Summer', ex: '여름에 수영해요 → I swim in summer' },
+    { kr: '가을', rom: 'gaeul', en: 'Autumn / fall', ex: '가을에 단풍이 들어요 → Leaves change in fall' },
+    { kr: '겨울', rom: 'gyeoul', en: 'Winter', ex: '겨울에 눈이 와요 → It snows in winter' },
+    { kr: '온도', rom: 'ondo', en: 'Temperature', ex: '온도가 몇 도예요? → What\'s the temperature?' },
+  ],
+  nature: [
+    { kr: '자연', rom: 'jayeon', en: 'Nature', ex: '자연이 아름다워요 → Nature is beautiful' },
+    { kr: '하늘', rom: 'haneul', en: 'Sky', ex: '하늘이 파래요 → The sky is blue' },
+    { kr: '해', rom: 'hae', en: 'Sun', ex: '해가 뜨거워요 → The sun is hot' },
+    { kr: '달', rom: 'dal', en: 'Moon', ex: '달이 밝아요 → The moon is bright' },
+    { kr: '별', rom: 'byeol', en: 'Star', ex: '별이 많이 보여요 → Many stars are visible' },
+    { kr: '구름', rom: 'gureum', en: 'Cloud', ex: '구름이 많아요 → There are many clouds' },
+    { kr: '산', rom: 'san', en: 'Mountain', ex: '산에 올라가요 → I climb the mountain' },
+    { kr: '강', rom: 'gang', en: 'River', ex: '강에서 수영해요 → I swim in the river' },
+    { kr: '바다', rom: 'bada', en: 'Sea / ocean', ex: '바다에 가고 싶어요 → I want to go to the sea' },
+    { kr: '호수', rom: 'hosu', en: 'Lake', ex: '호수가 조용해요 → The lake is calm' },
+    { kr: '숲', rom: 'sup', en: 'Forest', ex: '숲에 동물이 있어요 → There are animals in the forest' },
+    { kr: '나무', rom: 'namu', en: 'Tree', ex: '나무 아래에 앉아요 → I sit under a tree' },
+    { kr: '꽃', rom: 'kkot', en: 'Flower', ex: '꽃이 피었어요 → The flowers bloomed' },
+    { kr: '풀', rom: 'pul', en: 'Grass', ex: '풀이 초록이에요 → The grass is green' },
+    { kr: '땅', rom: 'ttang', en: 'Ground / earth', ex: '땅이 넓어요 → The land is wide' },
+    { kr: '돌', rom: 'dol', en: 'Stone / rock', ex: '돌을 주워요 → I pick up a stone' },
+    { kr: '섬', rom: 'seom', en: 'Island', ex: '섬에 가요 → I go to the island' },
+    { kr: '공기', rom: 'gonggi', en: 'Air', ex: '공기가 깨끗해요 → The air is clean' },
+  ],
+  places: [
+    { kr: '집', rom: 'jip', en: 'House / home', ex: '집에 가요 → I go home' },
+    { kr: '학교', rom: 'hakgyo', en: 'School', ex: '학교에서 공부해요 → I study at school' },
+    { kr: '병원', rom: 'byeongwon', en: 'Hospital', ex: '병원에 가야 해요 → I need to go to the hospital' },
+    { kr: '약국', rom: 'yakguk', en: 'Pharmacy', ex: '약국에서 약을 사요 → I buy medicine at the pharmacy' },
+    { kr: '은행', rom: 'eunhaeng', en: 'Bank', ex: '은행에서 돈을 찾아요 → I withdraw money at the bank' },
+    { kr: '식당', rom: 'sikdang', en: 'Restaurant', ex: '식당에서 밥을 먹어요 → I eat at the restaurant' },
+    { kr: '카페', rom: 'kape', en: 'Café', ex: '카페에서 커피를 마셔요 → I drink coffee at the café' },
+    { kr: '공원', rom: 'gongwon', en: 'Park', ex: '공원에서 산책해요 → I take a walk in the park' },
+    { kr: '도서관', rom: 'doseogwan', en: 'Library', ex: '도서관에서 책을 읽어요 → I read at the library' },
+    { kr: '영화관', rom: 'yeonghwagwan', en: 'Movie theater', ex: '영화관에서 영화를 봐요 → I watch movies at the theater' },
+    { kr: '공항', rom: 'gonghang', en: 'Airport', ex: '공항에서 비행기를 타요 → I take a plane at the airport' },
+    { kr: '지하철역', rom: 'jihacheolyeok', en: 'Subway station', ex: '지하철역이 어디예요? → Where is the subway station?' },
+    { kr: '호텔', rom: 'hotel', en: 'Hotel', ex: '호텔에서 자요 → I sleep at the hotel' },
+    { kr: '시장', rom: 'sijang', en: 'Market', ex: '시장에서 채소를 사요 → I buy vegetables at the market' },
+    { kr: '화장실', rom: 'hwajangsil', en: 'Bathroom / restroom', ex: '화장실이 어디예요? → Where is the bathroom?' },
+    { kr: '편의점', rom: 'pyeonuijeom', en: 'Convenience store', ex: '편의점에서 물을 사요 → I buy water at the convenience store' },
+    { kr: '회사', rom: 'hoesa', en: 'Company / office', ex: '회사에서 일해요 → I work at the company' },
+    { kr: '도시', rom: 'dosi', en: 'City', ex: '서울은 큰 도시예요 → Seoul is a big city' },
+  ],
+  transport: [
+    { kr: '버스', rom: 'beoseu', en: 'Bus', ex: '버스를 타요 → I take the bus' },
+    { kr: '택시', rom: 'taeksi', en: 'Taxi', ex: '택시를 불러요 → I call a taxi' },
+    { kr: '지하철', rom: 'jihacheol', en: 'Subway', ex: '지하철로 가요 → I go by subway' },
+    { kr: '기차', rom: 'gicha', en: 'Train', ex: '기차를 타고 부산에 가요 → I go to Busan by train' },
+    { kr: '비행기', rom: 'bihaenggi', en: 'Airplane', ex: '비행기로 두 시간이에요 → It\'s 2 hours by plane' },
+    { kr: '자동차', rom: 'jadongcha', en: 'Car', ex: '자동차로 출근해요 → I commute by car' },
+    { kr: '자전거', rom: 'jajeongeo', en: 'Bicycle', ex: '자전거를 타요 → I ride a bicycle' },
+    { kr: '오토바이', rom: 'otobai', en: 'Motorcycle', ex: '오토바이로 배달해요 → I deliver by motorcycle' },
+    { kr: '배', rom: 'bae', en: 'Ship / boat', ex: '배를 타고 섬에 가요 → I go to the island by boat' },
+    { kr: '표', rom: 'pyo', en: 'Ticket', ex: '표를 사요 → I buy a ticket' },
+    { kr: '정류장', rom: 'jeongnyujang', en: 'Bus stop', ex: '정류장에서 기다려요 → I wait at the bus stop' },
+    { kr: '타다', rom: 'tada', en: 'To ride / board', ex: '버스를 타요 → I ride the bus' },
+    { kr: '내리다', rom: 'naerida', en: 'To get off', ex: '다음 역에서 내려요 → I get off at the next stop' },
+    { kr: '환승', rom: 'hwanseung', en: 'Transfer', ex: '2호선으로 환승해요 → Transfer to line 2' },
+  ],
+  clothing: [
+    { kr: '옷', rom: 'ot', en: 'Clothes', ex: '옷을 입어요 → I put on clothes' },
+    { kr: '바지', rom: 'baji', en: 'Pants / trousers', ex: '청바지가 멋있어요 → The jeans look cool' },
+    { kr: '치마', rom: 'chima', en: 'Skirt', ex: '치마가 예뻐요 → The skirt is pretty' },
+    { kr: '셔츠', rom: 'syeocheu', en: 'Shirt', ex: '흰 셔츠를 입어요 → I wear a white shirt' },
+    { kr: '티셔츠', rom: 'tisyeocheu', en: 'T-shirt', ex: '편한 티셔츠를 입어요 → I wear a comfortable t-shirt' },
+    { kr: '재킷', rom: 'jaekit', en: 'Jacket', ex: '재킷을 입어요 → I wear a jacket' },
+    { kr: '코트', rom: 'koteu', en: 'Coat', ex: '겨울에 코트를 입어요 → I wear a coat in winter' },
+    { kr: '신발', rom: 'sinbal', en: 'Shoes', ex: '신발을 신어요 → I put on shoes' },
+    { kr: '양말', rom: 'yangmal', en: 'Socks', ex: '양말을 신어요 → I put on socks' },
+    { kr: '모자', rom: 'moja', en: 'Hat / cap', ex: '모자를 써요 → I wear a hat' },
+    { kr: '안경', rom: 'angyeong', en: 'Glasses', ex: '안경을 써요 → I wear glasses' },
+    { kr: '가방', rom: 'gabang', en: 'Bag', ex: '가방이 무거워요 → The bag is heavy' },
+    { kr: '지갑', rom: 'jigap', en: 'Wallet', ex: '지갑을 잃어버렸어요 → I lost my wallet' },
+    { kr: '시계', rom: 'sigye', en: 'Watch / clock', ex: '시계를 봐요 → I look at my watch' },
+    { kr: '입다', rom: 'ipda', en: 'To wear (clothes)', ex: '뭐 입을까요? → What should I wear?' },
+    { kr: '벗다', rom: 'beotda', en: 'To take off (clothes)', ex: '신발을 벗어요 → Take off your shoes' },
+  ],
+  home: [
+    { kr: '방', rom: 'bang', en: 'Room', ex: '방이 깨끗해요 → The room is clean' },
+    { kr: '침실', rom: 'chimsil', en: 'Bedroom', ex: '침실에서 자요 → I sleep in the bedroom' },
+    { kr: '부엌', rom: 'bueok', en: 'Kitchen', ex: '부엌에서 요리해요 → I cook in the kitchen' },
+    { kr: '거실', rom: 'geosil', en: 'Living room', ex: '거실에서 TV를 봐요 → I watch TV in the living room' },
+    { kr: '문', rom: 'mun', en: 'Door', ex: '문을 닫아요 → Close the door' },
+    { kr: '창문', rom: 'changmun', en: 'Window', ex: '창문을 열어요 → Open the window' },
+    { kr: '책상', rom: 'chaeksang', en: 'Desk', ex: '책상에서 공부해요 → I study at the desk' },
+    { kr: '의자', rom: 'uija', en: 'Chair', ex: '의자에 앉아요 → I sit on a chair' },
+    { kr: '소파', rom: 'sopa', en: 'Sofa', ex: '소파에서 쉬어요 → I rest on the sofa' },
+    { kr: '침대', rom: 'chimdae', en: 'Bed', ex: '침대에서 자요 → I sleep in the bed' },
+    { kr: '냉장고', rom: 'naengjanggo', en: 'Refrigerator', ex: '냉장고에 음식이 있어요 → There\'s food in the fridge' },
+    { kr: '세탁기', rom: 'setakgi', en: 'Washing machine', ex: '세탁기로 빨래해요 → I do laundry' },
+    { kr: '텔레비전', rom: 'tellebijeon', en: 'Television', ex: '텔레비전을 봐요 → I watch TV' },
+    { kr: '열쇠', rom: 'yeolsoe', en: 'Key', ex: '열쇠를 잃어버렸어요 → I lost my key' },
+    { kr: '청소하다', rom: 'cheongsohada', en: 'To clean', ex: '방을 청소해요 → I clean the room' },
+    { kr: '책', rom: 'chaek', en: 'Book', ex: '책을 읽어요 → I read a book' },
+    { kr: '전화', rom: 'jeonhwa', en: 'Phone / telephone', ex: '전화가 왔어요 → I got a call' },
+    { kr: '컴퓨터', rom: 'keompyuteo', en: 'Computer', ex: '컴퓨터로 일해요 → I work on the computer' },
+  ],
+  emotions: [
+    { kr: '사랑', rom: 'sarang', en: 'Love', ex: '사랑해요 → I love you' },
+    { kr: '행복', rom: 'haengbok', en: 'Happiness', ex: '행복하게 살아요 → I live happily' },
+    { kr: '슬픔', rom: 'seulpeum', en: 'Sadness', ex: '슬픔을 느껴요 → I feel sadness' },
+    { kr: '화', rom: 'hwa', en: 'Anger', ex: '화가 났어요 → I got angry' },
+    { kr: '두려움', rom: 'duryeoum', en: 'Fear', ex: '두려움을 느껴요 → I feel fear' },
+    { kr: '걱정', rom: 'geokjeong', en: 'Worry', ex: '걱정하지 마요 → Don\'t worry' },
+    { kr: '외로움', rom: 'oeroum', en: 'Loneliness', ex: '외로움을 느껴요 → I feel lonely' },
+    { kr: '설렘', rom: 'seollem', en: 'Excitement / flutter', ex: '첫 만남의 설렘 → The excitement of a first meeting' },
+    { kr: '기쁨', rom: 'gippeum', en: 'Joy', ex: '기쁨이 넘쳐요 → Overflowing with joy' },
+    { kr: '실망', rom: 'silmang', en: 'Disappointment', ex: '실망했어요 → I was disappointed' },
+    { kr: '부끄러움', rom: 'bukkeureoun', en: 'Embarrassment', ex: '부끄러워요 → I\'m embarrassed' },
+    { kr: '그리움', rom: 'geurioom', en: 'Longing / missing someone', ex: '그리워요 → I miss you' },
+    { kr: '희망', rom: 'huimang', en: 'Hope', ex: '희망을 가져요 → I have hope' },
+    { kr: '스트레스', rom: 'seuteuleseu', en: 'Stress', ex: '스트레스를 받아요 → I\'m stressed' },
+    { kr: '기분', rom: 'gibun', en: 'Mood / feeling', ex: '기분이 어때요? → How do you feel?' },
+    { kr: '감정', rom: 'gamjeong', en: 'Emotion', ex: '감정을 표현해요 → I express my feelings' },
+  ],
+  animals: [
+    { kr: '동물', rom: 'dongmul', en: 'Animal', ex: '동물원에 가요 → I go to the zoo' },
+    { kr: '개', rom: 'gae', en: 'Dog', ex: '개가 짖어요 → The dog barks' },
+    { kr: '고양이', rom: 'goyang-i', en: 'Cat', ex: '고양이가 귀여워요 → The cat is cute' },
+    { kr: '새', rom: 'sae', en: 'Bird', ex: '새가 날아요 → The bird flies' },
+    { kr: '물고기', rom: 'mulgogi', en: 'Fish', ex: '물고기를 잡아요 → I catch fish' },
+    { kr: '소', rom: 'so', en: 'Cow', ex: '소가 풀을 먹어요 → The cow eats grass' },
+    { kr: '말', rom: 'mal', en: 'Horse', ex: '말을 타요 → I ride a horse' },
+    { kr: '돼지', rom: 'dwaegi', en: 'Pig', ex: '돼지고기 → Pork' },
+    { kr: '닭', rom: 'dak', en: 'Chicken', ex: '닭이 울어요 → The chicken crows' },
+    { kr: '토끼', rom: 'tokki', en: 'Rabbit', ex: '토끼가 뛰어요 → The rabbit hops' },
+    { kr: '곰', rom: 'gom', en: 'Bear', ex: '곰이 무서워요 → Bears are scary' },
+    { kr: '호랑이', rom: 'horang-i', en: 'Tiger', ex: '호랑이는 빨라요 → Tigers are fast' },
+    { kr: '사자', rom: 'saja', en: 'Lion', ex: '사자가 울어요 → The lion roars' },
+    { kr: '코끼리', rom: 'kokkiri', en: 'Elephant', ex: '코끼리는 코가 길어요 → Elephants have long trunks' },
+    { kr: '원숭이', rom: 'wonsungi', en: 'Monkey', ex: '원숭이가 나무에 있어요 → Monkeys are in the trees' },
+    { kr: '뱀', rom: 'baem', en: 'Snake', ex: '뱀이 무서워요 → Snakes are scary' },
+    { kr: '나비', rom: 'nabi', en: 'Butterfly', ex: '나비가 예뻐요 → The butterfly is pretty' },
+    { kr: '벌', rom: 'beol', en: 'Bee', ex: '벌에 쏘였어요 → I got stung by a bee' },
+    { kr: '개구리', rom: 'gaeguri', en: 'Frog', ex: '개구리가 울어요 → The frog croaks' },
+    { kr: '쥐', rom: 'jwi', en: 'Mouse / rat', ex: '쥐가 무서워요 → Mice are scary' },
+  ],
+  society: [
+    { kr: '일', rom: 'il', en: 'Work / job', ex: '일을 열심히 해요 → I work hard' },
+    { kr: '경제', rom: 'gyeongje', en: 'Economy', ex: '경제가 어려워요 → The economy is tough' },
+    { kr: '정치', rom: 'jeongchi', en: 'Politics', ex: '정치에 관심 있어요 → I\'m interested in politics' },
+    { kr: '문화', rom: 'munhwa', en: 'Culture', ex: '한국 문화가 좋아요 → I like Korean culture' },
+    { kr: '역사', rom: 'yeoksa', en: 'History', ex: '한국 역사를 공부해요 → I study Korean history' },
+    { kr: '과학', rom: 'gwahak', en: 'Science', ex: '과학이 재미있어요 → Science is interesting' },
+    { kr: '예술', rom: 'yesul', en: 'Art', ex: '예술을 좋아해요 → I like art' },
+    { kr: '건강', rom: 'geongang', en: 'Health', ex: '건강이 중요해요 → Health is important' },
+    { kr: '결혼', rom: 'gyeolhon', en: 'Marriage', ex: '결혼하고 싶어요 → I want to get married' },
+    { kr: '교육', rom: 'gyoyuk', en: 'Education', ex: '교육이 중요해요 → Education is important' },
+    { kr: '여행', rom: 'yeohaeng', en: 'Travel', ex: '여행을 좋아해요 → I like to travel' },
+    { kr: '음악', rom: 'eumak', en: 'Music', ex: '음악을 들어요 → I listen to music' },
+    { kr: '영화', rom: 'yeonghwa', en: 'Movie / film', ex: '영화를 봐요 → I watch a movie' },
+    { kr: '스포츠', rom: 'seupocheu', en: 'Sports', ex: '스포츠를 좋아해요 → I like sports' },
+    { kr: '뉴스', rom: 'nyuseu', en: 'News', ex: '뉴스를 봐요 → I watch the news' },
+    { kr: '인터넷', rom: 'inteonet', en: 'Internet', ex: '인터넷으로 검색해요 → I search on the internet' },
+    { kr: '돈', rom: 'don', en: 'Money', ex: '돈이 없어요 → I have no money' },
+    { kr: '법', rom: 'beop', en: 'Law', ex: '법을 지켜야 해요 → You must follow the law' },
+  ],
+  questions: [
+    { kr: '뭐', rom: 'mwo', en: 'What (casual)', ex: '뭐 해요? → What are you doing?' },
+    { kr: '무엇', rom: 'mueot', en: 'What (formal)', ex: '무엇을 원해요? → What do you want?' },
+    { kr: '누구', rom: 'nugu', en: 'Who', ex: '누구예요? → Who is it?' },
+    { kr: '어디', rom: 'eodi', en: 'Where', ex: '어디 가요? → Where are you going?' },
+    { kr: '언제', rom: 'eonje', en: 'When', ex: '언제 와요? → When are you coming?' },
+    { kr: '왜', rom: 'wae', en: 'Why', ex: '왜 그래요? → Why are you like that?' },
+    { kr: '어떻게', rom: 'eotteoke', en: 'How', ex: '어떻게 해요? → How do you do it?' },
+    { kr: '어떤', rom: 'eotteon', en: 'What kind of', ex: '어떤 음악을 좋아해요? → What kind of music do you like?' },
+    { kr: '얼마나', rom: 'eolmana', en: 'How much / how long', ex: '얼마나 걸려요? → How long does it take?' },
+    { kr: '얼마', rom: 'eolma', en: 'How much (price)', ex: '얼마예요? → How much is it?' },
+    { kr: '몇', rom: 'myeot', en: 'How many', ex: '몇 시예요? → What time is it?' },
+    { kr: '어느', rom: 'eoneo', en: 'Which', ex: '어느 쪽이에요? → Which way is it?' },
+  ],
+  expressions: [
+    { kr: '그리고', rom: 'geurigo', en: 'And / and then', ex: '먹고 그리고 자요 → I eat and then sleep' },
+    { kr: '그런데', rom: 'geureonde', en: 'But / by the way', ex: '그런데 왜요? → But why?' },
+    { kr: '그래서', rom: 'geuraeseo', en: 'So / therefore', ex: '그래서 안 왔어요 → So I didn\'t come' },
+    { kr: '하지만', rom: 'hajiman', en: 'But / however', ex: '좋지만 비싸요 → I like it but it\'s expensive' },
+    { kr: '아직', rom: 'ajik', en: 'Still / not yet', ex: '아직 안 왔어요 → They haven\'t come yet' },
+    { kr: '이미', rom: 'imi', en: 'Already', ex: '이미 먹었어요 → I already ate' },
+    { kr: '정말', rom: 'jeongmal', en: 'Really / truly', ex: '정말요? → Really?' },
+    { kr: '매우', rom: 'maeu', en: 'Very / extremely', ex: '매우 좋아요 → It\'s very good' },
+    { kr: '너무', rom: 'neomu', en: 'Too / so very', ex: '너무 맛있어요! → It\'s so delicious!' },
+    { kr: '많이', rom: 'mani', en: 'A lot / much', ex: '많이 드세요 → Please eat a lot' },
+    { kr: '좀', rom: 'jom', en: 'A little / please', ex: '좀 도와주세요 → Please help me a little' },
+    { kr: '잘', rom: 'jal', en: 'Well', ex: '잘 했어요 → You did well' },
+    { kr: '빨리', rom: 'ppalli', en: 'Quickly / fast', ex: '빨리 와요 → Come quickly' },
+    { kr: '자주', rom: 'jaju', en: 'Often / frequently', ex: '자주 만나요 → We meet often' },
+    { kr: '항상', rom: 'hangsang', en: 'Always', ex: '항상 고마워요 → I\'m always thankful' },
+    { kr: '가끔', rom: 'gakkeum', en: 'Sometimes', ex: '가끔 영화를 봐요 → I sometimes watch movies' },
+    { kr: '다시', rom: 'dasi', en: 'Again', ex: '다시 한번 말해 주세요 → Please say it again' },
+    { kr: '함께', rom: 'hamkke', en: 'Together / with', ex: '함께 가요 → Let\'s go together' },
+    { kr: '혼자', rom: 'honja', en: 'Alone / by oneself', ex: '혼자 왔어요 → I came alone' },
+    { kr: '먼저', rom: 'meonjeo', en: 'First / before others', ex: '먼저 드세요 → Please go ahead and eat' },
+    { kr: '바로', rom: 'baro', en: 'Right / directly / immediately', ex: '바로 여기예요 → It\'s right here' },
+    { kr: '특히', rom: 'teuki', en: 'Especially / particularly', ex: '특히 김치를 좋아해요 → I especially like kimchi' },
+    { kr: '물론', rom: 'mullon', en: 'Of course', ex: '물론이죠! → Of course!' },
+    { kr: '아마', rom: 'ama', en: 'Probably / perhaps', ex: '아마 내일 올 거예요 → They\'ll probably come tomorrow' },
+  ],
+  daily: [
+    { kr: '아침', rom: 'achim', en: 'Morning / breakfast', ex: '아침에 일어나요 → I wake up in the morning' },
+    { kr: '점심', rom: 'jeomsim', en: 'Noon / lunch', ex: '점심 뭐 먹었어요? → What did you have for lunch?' },
+    { kr: '저녁', rom: 'jeonyeok', en: 'Evening / dinner', ex: '저녁 같이 먹어요 → Let\'s eat dinner together' },
+    { kr: '식사', rom: 'siksa', en: 'Meal', ex: '식사 하셨어요? → Have you eaten?' },
+    { kr: '잠', rom: 'jam', en: 'Sleep', ex: '잠이 와요 → I\'m getting sleepy' },
+    { kr: '꿈', rom: 'kkum', en: 'Dream', ex: '좋은 꿈 꿔요 → Have a good dream' },
+    { kr: '준비', rom: 'junbi', en: 'Preparation / being ready', ex: '준비됐어요? → Are you ready?' },
+    { kr: '쉬다', rom: 'swida', en: 'To rest / relax', ex: '좀 쉬어요 → Rest a little' },
+    { kr: '놀다', rom: 'nolda', en: 'To play / hang out', ex: '친구랑 놀아요 → I hang out with friends' },
+    { kr: '산책', rom: 'sanchaek', en: 'Walk / stroll', ex: '공원에서 산책해요 → I take a walk in the park' },
+    { kr: '쇼핑', rom: 'syoping', en: 'Shopping', ex: '쇼핑하러 가요 → I go shopping' },
+    { kr: '약', rom: 'yak', en: 'Medicine', ex: '약을 먹어요 → I take medicine' },
+    { kr: '소리', rom: 'sori', en: 'Sound / noise', ex: '무슨 소리예요? → What\'s that sound?' },
+    { kr: '목소리', rom: 'moksori', en: 'Voice', ex: '목소리가 예뻐요 → You have a pretty voice' },
+    { kr: '노래', rom: 'norae', en: 'Song / singing', ex: '노래를 불러요 → I sing a song' },
+    { kr: '냄새', rom: 'naemsae', en: 'Smell', ex: '냄새가 좋아요 → It smells good' },
+    { kr: '맛', rom: 'mat', en: 'Taste / flavor', ex: '맛이 어때요? → How does it taste?' },
+    { kr: '맛있다', rom: 'masitda', en: 'Delicious', ex: '정말 맛있어요! → It\'s really delicious!' },
+    { kr: '맛없다', rom: 'maseoptda', en: 'Not tasty', ex: '이 음식은 맛없어요 → This food doesn\'t taste good' },
+    { kr: '편지', rom: 'pyeonji', en: 'Letter (mail)', ex: '편지를 써요 → I write a letter' },
+    { kr: '사진', rom: 'sajin', en: 'Photo / picture', ex: '사진을 찍어요 → I take a photo' },
+    { kr: '이야기', rom: 'iyagi', en: 'Story / conversation', ex: '이야기해요 → Let\'s talk' },
+  ],
+  directions: [
+    { kr: '안', rom: 'an', en: 'Inside', ex: '가방 안에 있어요 → It\'s inside the bag' },
+    { kr: '밖', rom: 'bak', en: 'Outside', ex: '밖에 나가요 → I go outside' },
+    { kr: '위', rom: 'wi', en: 'Above / on top', ex: '책상 위에 있어요 → It\'s on the desk' },
+    { kr: '아래', rom: 'arae', en: 'Below / under', ex: '침대 아래에 있어요 → It\'s under the bed' },
+    { kr: '앞', rom: 'ap', en: 'In front of', ex: '학교 앞에서 만나요 → Let\'s meet in front of the school' },
+    { kr: '뒤', rom: 'dwi', en: 'Behind / back', ex: '집 뒤에 있어요 → It\'s behind the house' },
+    { kr: '옆', rom: 'yeop', en: 'Next to / beside', ex: '옆에 앉아요 → Sit next to me' },
+    { kr: '사이', rom: 'sai', en: 'Between / among', ex: '나무 사이에 있어요 → It\'s between the trees' },
+    { kr: '가운데', rom: 'gaunde', en: 'In the middle / center', ex: '가운데 앉아요 → I sit in the middle' },
+    { kr: '오른쪽', rom: 'oreunjjok', en: 'Right side', ex: '오른쪽으로 가세요 → Go to the right' },
+    { kr: '왼쪽', rom: 'oenjjok', en: 'Left side', ex: '왼쪽으로 가세요 → Go to the left' },
+    { kr: '직진', rom: 'jikjin', en: 'Straight ahead', ex: '직진하세요 → Go straight' },
+    { kr: '근처', rom: 'geuncheo', en: 'Nearby / near here', ex: '근처에 카페 있어요? → Is there a café nearby?' },
+    { kr: '멀리', rom: 'meolli', en: 'Far away', ex: '멀리 있어요 → It\'s far away' },
+  ],
+  concepts: [
+    { kr: '생각', rom: 'saenggak', en: 'Thought / idea', ex: '좋은 생각이에요 → That\'s a good idea' },
+    { kr: '삶', rom: 'salm', en: 'Life (one\'s life)', ex: '삶이 아름다워요 → Life is beautiful' },
+    { kr: '자유', rom: 'jayu', en: 'Freedom / liberty', ex: '자유가 중요해요 → Freedom is important' },
+    { kr: '기억', rom: 'gieok', en: 'Memory', ex: '기억이 나요 → I remember' },
+    { kr: '꿈', rom: 'kkum', en: 'Dream / aspiration', ex: '꿈을 이뤄요 → I achieve my dream' },
+    { kr: '이름', rom: 'ireum', en: 'Name', ex: '이름이 뭐예요? → What is your name?' },
+    { kr: '나이', rom: 'nai', en: 'Age', ex: '나이가 어떻게 돼요? → How old are you?' },
+    { kr: '관계', rom: 'gwangye', en: 'Relationship / connection', ex: '좋은 관계예요 → It\'s a good relationship' },
+    { kr: '성격', rom: 'seonggyeok', en: 'Personality / character', ex: '성격이 좋아요 → They have a good personality' },
+    { kr: '기회', rom: 'gihoe', en: 'Opportunity / chance', ex: '좋은 기회예요 → It\'s a good opportunity' },
+    { kr: '경험', rom: 'gyeongheom', en: 'Experience', ex: '경험이 많아요 → I have a lot of experience' },
+    { kr: '능력', rom: 'neungnyeok', en: 'Ability / capability', ex: '능력이 있어요 → I have the ability' },
+    { kr: '노력', rom: 'noryeok', en: 'Effort / hard work', ex: '노력하면 돼요 → You can do it if you try' },
+    { kr: '목표', rom: 'mokpyo', en: 'Goal / target', ex: '목표가 있어요 → I have a goal' },
+    { kr: '계획', rom: 'gyehoek', en: 'Plan / schedule', ex: '계획이 있어요 → I have a plan' },
+    { kr: '결정', rom: 'gyeoljeong', en: 'Decision', ex: '결정을 내려요 → I make a decision' },
+    { kr: '결과', rom: 'gyeolgwa', en: 'Result / outcome', ex: '결과가 좋아요 → The result is good' },
+    { kr: '이유', rom: 'iyu', en: 'Reason', ex: '이유가 뭐예요? → What\'s the reason?' },
+    { kr: '의미', rom: 'uimi', en: 'Meaning / significance', ex: '무슨 의미예요? → What does it mean?' },
+    { kr: '가능성', rom: 'ganeungseong', en: 'Possibility', ex: '가능성이 있어요 → There\'s a possibility' },
+    { kr: '상황', rom: 'sanghwang', en: 'Situation / circumstances', ex: '상황이 어때요? → How\'s the situation?' },
+    { kr: '분위기', rom: 'bunwigi', en: 'Atmosphere / vibe', ex: '분위기가 좋아요 → The atmosphere is nice' },
+    { kr: '인기', rom: 'ingi', en: 'Popularity', ex: '인기가 많아요 → Very popular' },
+    { kr: '표현', rom: 'pyohyeon', en: 'Expression', ex: '표현이 어려워요 → It\'s hard to express' },
+  ],
+  society2: [
+    { kr: '사회', rom: 'sahoe', en: 'Society', ex: '사회 문제예요 → It\'s a social problem' },
+    { kr: '정부', rom: 'jeongbu', en: 'Government', ex: '정부 정책이에요 → It\'s government policy' },
+    { kr: '국가', rom: 'gukga', en: 'Nation / state', ex: '강한 국가예요 → It\'s a strong nation' },
+    { kr: '국민', rom: 'gungmin', en: 'Citizens / the people', ex: '국민이 투표해요 → Citizens vote' },
+    { kr: '선거', rom: 'seongeo', en: 'Election', ex: '선거가 있어요 → There\'s an election' },
+    { kr: '경쟁', rom: 'gyeongjaeng', en: 'Competition', ex: '경쟁이 심해요 → The competition is fierce' },
+    { kr: '전쟁', rom: 'jeonjaeng', en: 'War', ex: '전쟁이 없는 세상 → A world without war' },
+    { kr: '평화', rom: 'pyeonghwa', en: 'Peace', ex: '평화롭게 살아요 → I live peacefully' },
+    { kr: '경찰', rom: 'gyeongchal', en: 'Police', ex: '경찰을 불러요 → I call the police' },
+    { kr: '군', rom: 'gun', en: 'Military / army', ex: '군에 입대해요 → I enlist in the military' },
+    { kr: '신문', rom: 'sinmun', en: 'Newspaper', ex: '신문을 읽어요 → I read the newspaper' },
+    { kr: '방송', rom: 'bangseong', en: 'Broadcast', ex: '방송을 봐요 → I watch the broadcast' },
+    { kr: '광고', rom: 'gwanggo', en: 'Advertisement', ex: '광고가 재미있어요 → The ad is funny' },
+    { kr: '전통', rom: 'jeontong', en: 'Tradition', ex: '한국 전통이에요 → It\'s a Korean tradition' },
+    { kr: '노동', rom: 'nodong', en: 'Labor / work', ex: '노동자가 일해요 → Workers work' },
+    { kr: '산업', rom: 'saneop', en: 'Industry', ex: '산업이 발전해요 → Industry develops' },
+    { kr: '환경', rom: 'hwanggyeong', en: 'Environment', ex: '환경을 지켜요 → I protect the environment' },
+    { kr: '투자', rom: 'tuja', en: 'Investment', ex: '투자를 해요 → I make an investment' },
+    { kr: '사고', rom: 'sago', en: 'Accident', ex: '사고가 났어요 → An accident happened' },
+    { kr: '피해', rom: 'pihae', en: 'Damage / harm', ex: '피해를 입었어요 → I suffered damage' },
+  ],
+  more_verbs: [
+    { kr: '나오다', rom: 'naoda', en: 'To come out / emerge', ex: '결과가 나왔어요 → The results came out' },
+    { kr: '나타나다', rom: 'natanada', en: 'To appear / show up', ex: '갑자기 나타났어요 → They suddenly appeared' },
+    { kr: '사라지다', rom: 'sarajida', en: 'To disappear / vanish', ex: '구름이 사라졌어요 → The clouds disappeared' },
+    { kr: '변하다', rom: 'byeonhada', en: 'To change', ex: '날씨가 변했어요 → The weather changed' },
+    { kr: '자라다', rom: 'jarada', en: 'To grow up', ex: '어디서 자랐어요? → Where did you grow up?' },
+    { kr: '올라가다', rom: 'ollagada', en: 'To go up / climb', ex: '계단을 올라가요 → I go up the stairs' },
+    { kr: '내려가다', rom: 'naeryeogada', en: 'To go down / descend', ex: '산을 내려가요 → I go down the mountain' },
+    { kr: '나가다', rom: 'nagada', en: 'To go out / exit', ex: '밖에 나가요 → I go outside' },
+    { kr: '들어오다', rom: 'deureooda', en: 'To come in / enter', ex: '집에 들어와요 → I come into the house' },
+    { kr: '놀라다', rom: 'nollada', en: 'To be surprised', ex: '깜짝 놀랐어요 → I was so surprised' },
+    { kr: '잃다', rom: 'ilta', en: 'To lose', ex: '열쇠를 잃었어요 → I lost my key' },
+    { kr: '잊다', rom: 'itta', en: 'To forget', ex: '이름을 잊었어요 → I forgot the name' },
+    { kr: '얻다', rom: 'eotda', en: 'To get / obtain', ex: '정보를 얻어요 → I get information' },
+    { kr: '지내다', rom: 'jinaeda', en: 'To get along / spend time', ex: '잘 지내요? → How are you doing?' },
+    { kr: '이해하다', rom: 'ihaehada', en: 'To understand', ex: '이해했어요 → I understood' },
+    { kr: '설명하다', rom: 'seolmyeonghada', en: 'To explain', ex: '다시 설명해 주세요 → Please explain again' },
+    { kr: '확인하다', rom: 'hwagiinhada', en: 'To confirm / check', ex: '예약을 확인해요 → I confirm the reservation' },
+    { kr: '결정하다', rom: 'gyeoljeongada', en: 'To decide', ex: '이미 결정했어요 → I already decided' },
+    { kr: '준비하다', rom: 'junbihada', en: 'To prepare', ex: '시험을 준비해요 → I prepare for the exam' },
+    { kr: '이기다', rom: 'igida', en: 'To win', ex: '경기에서 이겼어요 → I won the game' },
+    { kr: '지다', rom: 'jida', en: 'To lose (a game)', ex: '오늘 졌어요 → I lost today' },
+    { kr: '즐기다', rom: 'jeulgida', en: 'To enjoy', ex: '음악을 즐겨요 → I enjoy music' },
+    { kr: '싸우다', rom: 'ssauda', en: 'To fight / argue', ex: '싸우지 마요 → Don\'t fight' },
+    { kr: '참다', rom: 'chamda', en: 'To endure / hold back', ex: '웃음을 참아요 → I hold back my laughter' },
+    { kr: '바꾸다', rom: 'bakkuda', en: 'To change / swap', ex: '자리를 바꿔요 → I change seats' },
+    { kr: '쉬다', rom: 'swida', en: 'To rest', ex: '잠깐 쉬어요 → Let\'s rest a moment' },
+    { kr: '나누다', rom: 'nanuda', en: 'To share / divide', ex: '음식을 나눠요 → I share food' },
+  ],
+};
+
+const GRAMMAR = [
+  {
+    title: 'Sentence Structure: Subject–Object–Verb',
+    tag: 'Basics',
+    desc: 'Korean sentences follow Subject + Object + Verb order — the opposite of English. The verb always comes at the end.',
+    structure: 'Subject + Object + Verb\n나는 밥을 먹어요. → I (eat) rice.',
+    examples: [
+      { kr: '나는 한국어를 공부해요', rom: 'naneun hangugeo-reul gongbuhaeyo', en: 'I study Korean' },
+      { kr: '그는 물을 마셔요', rom: 'geuneun mul-eul masyeoyo', en: 'He drinks water' },
+      { kr: '우리는 영화를 봐요', rom: 'urineun yeonghwa-reul bwayo', en: 'We watch a movie' },
+    ]
+  },
+  {
+    title: 'Topic Particle: 은 / 는',
+    tag: 'Particles',
+    desc: '은 (after consonant) and 는 (after vowel) mark the topic of the sentence. Similar to "as for…" in English.',
+    structure: '[noun ending in consonant] + 은\n[noun ending in vowel] + 는',
+    examples: [
+      { kr: '나는 학생이에요', rom: 'naneun haksaengieyo', en: 'As for me, I am a student' },
+      { kr: '저는 미국 사람이에요', rom: 'jeoneun miguk saramieyo', en: 'As for me, I am American' },
+      { kr: '오늘은 날씨가 좋아요', rom: 'oneureun nalssiga joayo', en: 'As for today, the weather is good' },
+    ]
+  },
+  {
+    title: 'Subject Particle: 이 / 가',
+    tag: 'Particles',
+    desc: '이 (after consonant) and 가 (after vowel) mark the grammatical subject — who or what is performing the action.',
+    structure: '[noun ending in consonant] + 이\n[noun ending in vowel] + 가',
+    examples: [
+      { kr: '고양이가 있어요', rom: 'goyang-iga isseoyo', en: 'There is a cat' },
+      { kr: '비가 와요', rom: 'biga wayo', en: 'Rain is coming (It\'s raining)' },
+      { kr: '밥이 맛있어요', rom: 'babi massisseoyo', en: 'The rice is delicious' },
+    ]
+  },
+  {
+    title: 'Object Particle: 을 / 를',
+    tag: 'Particles',
+    desc: '을 (after consonant) and 를 (after vowel) mark the direct object — what receives the action of the verb.',
+    structure: '[noun ending in consonant] + 을\n[noun ending in vowel] + 를',
+    examples: [
+      { kr: '책을 읽어요', rom: 'chaeg-eul ilgeoyo', en: 'I read a book' },
+      { kr: '음악을 들어요', rom: 'eumag-eul deureoyo', en: 'I listen to music' },
+      { kr: '커피를 마셔요', rom: 'keopi-reul masyeoyo', en: 'I drink coffee' },
+    ]
+  },
+  {
+    title: 'Location Particle: 에 vs 에서',
+    tag: 'Particles',
+    desc: '에 marks a destination or static location ("to/at"). 에서 marks where an action takes place ("at/in" — with action).',
+    structure: '[place] + 에 → destination / existence\n[place] + 에서 → where action happens',
+    examples: [
+      { kr: '학교에 가요', rom: 'hakgyo-e gayo', en: 'I go to school' },
+      { kr: '학교에서 공부해요', rom: 'hakgyo-eseo gongbuhaeyo', en: 'I study at school' },
+      { kr: '집에 있어요', rom: 'jib-e isseoyo', en: 'I am at home' },
+    ]
+  },
+  {
+    title: 'Polite Present Tense: -아요 / -어요',
+    tag: 'Verb Endings',
+    desc: 'The most common polite ending. Add -아요 to verb stems with ㅏ or ㅗ vowels; -어요 to all others.',
+    structure: 'Stem vowel ㅏ/ㅗ → stem + 아요\nAll others → stem + 어요\n하다 verbs → 해요',
+    examples: [
+      { kr: '먹어요', rom: 'meogeoyo', en: 'eat (먹다 → 먹 + 어요)' },
+      { kr: '가요', rom: 'gayo', en: 'go (가다 → 가 + 아요 → 가요)' },
+      { kr: '공부해요', rom: 'gongbuhaeyo', en: 'study (공부하다 → 해요)' },
+    ]
+  },
+  {
+    title: 'Negative: 안 and -지 않아요',
+    tag: 'Negation',
+    desc: 'Place 안 before a verb/adjective for short negation. Use -지 않아요 after the stem for formal negation.',
+    structure: '안 + verb/adjective\nVerb stem + 지 않아요',
+    examples: [
+      { kr: '안 먹어요', rom: 'an meogeoyo', en: 'I don\'t eat' },
+      { kr: '먹지 않아요', rom: 'meokji anayo', en: 'I don\'t eat (formal)' },
+      { kr: '안 가요', rom: 'an gayo', en: 'I don\'t go' },
+    ]
+  },
+  {
+    title: 'Expressing Want: -고 싶어요',
+    tag: 'Expression',
+    desc: 'Attach -고 싶어요 to a verb stem to say you want to do something.',
+    structure: 'Verb stem + 고 싶어요',
+    examples: [
+      { kr: '먹고 싶어요', rom: 'meokgo sipeoyo', en: 'I want to eat' },
+      { kr: '가고 싶어요', rom: 'gago sipeoyo', en: 'I want to go' },
+      { kr: '한국에 가고 싶어요', rom: 'hangug-e gago sipeoyo', en: 'I want to go to Korea' },
+    ]
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════
+
+let authToken = localStorage.getItem('token');
+let currentUser = null;
+let progressCache = {}; // "category:card_kr" -> boolean
+
+let currentDeck = [];
+let currentIndex = 0;
+let known = new Set();
+let isFlipped = false;
+
+let quizPool = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizTotal = 0;
+let quizAnswered = false;
+
+// ══════════════════════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════════════════════
+
+async function authFetch(path, opts = {}) {
+  return fetch(API_URL + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+}
+
+async function checkAuth() {
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get('token');
+  if (urlToken) {
+    authToken = urlToken;
+    localStorage.setItem('token', urlToken);
+    window.history.replaceState({}, '', '/');
+  }
+
+  if (!authToken) { showAuthModal(); return; }
+
+  const res = await authFetch('/api/auth/me');
+  if (!res.ok) {
+    localStorage.removeItem('token');
+    authToken = null;
+    showAuthModal();
+    return;
+  }
+
+  currentUser = await res.json();
+  hideAuthModal();
+  showUserInNav();
+  await loadUserProgress();
+  loadDeck();
+}
+
+function showAuthModal() {
+  document.getElementById('auth-modal').classList.remove('hidden');
+}
+
+function hideAuthModal() {
+  document.getElementById('auth-modal').classList.add('hidden');
+}
+
+function showUserInNav() {
+  document.getElementById('nav-user').style.display = 'flex';
+  document.getElementById('nav-user-name').textContent = currentUser.name || currentUser.email;
+}
+
+async function loadUserProgress() {
+  const res = await authFetch('/api/progress');
+  if (!res.ok) return;
+  const items = await res.json();
+  progressCache = {};
+  items.forEach(item => {
+    progressCache[`${item.category}:${item.card_kr}`] = item.known;
+  });
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  document.getElementById('login-error').textContent = '';
+
+  const res = await fetch(API_URL + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    document.getElementById('login-error').textContent = err.detail || 'Login failed';
+    return;
+  }
+
+  const data = await res.json();
+  authToken = data.access_token;
+  currentUser = data.user;
+  localStorage.setItem('token', authToken);
+  hideAuthModal();
+  showUserInNav();
+  await loadUserProgress();
+  loadDeck();
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  document.getElementById('reg-error').textContent = '';
+
+  const res = await fetch(API_URL + '/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    document.getElementById('reg-error').textContent = err.detail || 'Registration failed';
+    return;
+  }
+
+  const data = await res.json();
+  authToken = data.access_token;
+  currentUser = data.user;
+  localStorage.setItem('token', authToken);
+  hideAuthModal();
+  showUserInNav();
+  await loadUserProgress();
+  loadDeck();
+}
+
+function doLogout() {
+  authToken = null;
+  currentUser = null;
+  progressCache = {};
+  localStorage.removeItem('token');
+  document.getElementById('nav-user').style.display = 'none';
+  document.getElementById('score-history').style.display = 'none';
+  showAuthModal();
+}
+
+function googleLogin() {
+  window.location.href = API_URL + '/api/auth/google';
+}
+
+function switchAuthTab(tab, btn) {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('auth-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('auth-register').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+async function loadQuizHistory() {
+  if (!authToken) return;
+  const res = await authFetch('/api/quiz/scores');
+  if (!res.ok) return;
+  const scores = await res.json();
+  if (!scores.length) return;
+
+  document.getElementById('score-history').style.display = 'block';
+  document.getElementById('score-history-body').innerHTML = scores.slice(0, 10).map(s => {
+    const pct = Math.round(s.score / s.total * 100);
+    const cls = pct >= 80 ? 'good' : pct >= 60 ? 'ok' : 'bad';
+    const date = new Date(s.created_at).toLocaleDateString();
+    const dir = s.direction === 'kr-en' ? 'KR → EN' : 'EN → KR';
+    return `<tr>
+      <td>${s.category}</td>
+      <td><span class="score-pct ${cls}">${s.score}/${s.total} (${pct}%)</span></td>
+      <td>${dir}</td>
+      <td>${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════════════
+
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'quiz') loadQuizHistory();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  HANGUL
+// ══════════════════════════════════════════════════════════════════
+
+let currentHangulTab = 'vowels';
+
+function showHangulTab(tab, btn) {
+  currentHangulTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHangul();
+}
+
+function renderHangul() {
+  const grid = document.getElementById('hangul-grid');
+  grid.innerHTML = HANGUL[currentHangulTab].map(item => `
+    <div class="hangul-card" onclick="this.classList.toggle('revealed')">
+      <div class="char">${item.char}</div>
+      <div class="rom">${item.rom}</div>
+      <div class="meaning">${item.meaning}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  VOCAB / FLASHCARDS
+// ══════════════════════════════════════════════════════════════════
+
+function loadDeck() {
+  const cat = document.getElementById('category-select').value;
+  currentDeck = [...VOCAB[cat]];
+  currentIndex = 0;
+  known = new Set();
+  currentDeck.forEach((card, i) => {
+    if (progressCache[`${cat}:${card.kr}`]) known.add(i);
+  });
+  isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  updateCard();
+}
+
+function shuffleDeck() {
+  for (let i = currentDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+  }
+  currentIndex = 0;
+  known = new Set();
+  isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  updateCard();
+}
+
+function updateCard() {
+  if (!currentDeck.length) return;
+  const card = currentDeck[currentIndex];
+  document.getElementById('card-korean').textContent = card.kr;
+  document.getElementById('card-english').textContent = card.en;
+  document.getElementById('card-romanized').textContent = card.rom;
+  document.getElementById('card-example').textContent = card.ex || '';
+  document.getElementById('card-counter').textContent = `${currentIndex + 1} / ${currentDeck.length}`;
+  const pct = known.size / currentDeck.length * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${known.size} / ${currentDeck.length} known`;
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('flashcard').classList.toggle('flipped', isFlipped);
+}
+
+function prevCard() {
+  isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  currentIndex = (currentIndex - 1 + currentDeck.length) % currentDeck.length;
+  updateCard();
+}
+
+function nextCard() {
+  isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  currentIndex = (currentIndex + 1) % currentDeck.length;
+  updateCard();
+}
+
+function markCard(correct) {
+  const cat = document.getElementById('category-select').value;
+  const card = currentDeck[currentIndex];
+  if (correct) { known.add(currentIndex); progressCache[`${cat}:${card.kr}`] = true; }
+  else { known.delete(currentIndex); progressCache[`${cat}:${card.kr}`] = false; }
+  updateCard();
+  if (authToken) {
+    authFetch('/api/progress', {
+      method: 'PUT',
+      body: JSON.stringify({ category: cat, card_kr: card.kr, known: correct }),
+    }).catch(() => {});
+  }
+  setTimeout(nextCard, 300);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  GRAMMAR
+// ══════════════════════════════════════════════════════════════════
+
+function renderGrammar() {
+  document.getElementById('grammar-list').innerHTML = GRAMMAR.map((g, i) => `
+    <div class="grammar-card">
+      <div class="grammar-header" onclick="toggleGrammar(${i}, this)">
+        <div><h3>${g.title} <span class="tag">${g.tag}</span></h3></div>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="grammar-body" id="grammar-body-${i}">
+        <p>${g.desc}</p>
+        <div class="structure">${g.structure.replace(/\n/g, '<br>')}</div>
+        <table class="examples-table">
+          <tr><th>Korean</th><th>Romanized</th><th>English</th></tr>
+          ${g.examples.map(e => `
+            <tr>
+              <td class="kr">${e.kr}</td>
+              <td class="rom">${e.rom}</td>
+              <td>${e.en}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleGrammar(i, header) {
+  const body = document.getElementById(`grammar-body-${i}`);
+  body.classList.toggle('open');
+  header.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  QUIZ
+// ══════════════════════════════════════════════════════════════════
+
+function getAllVocab(cat) {
+  if (cat === 'all') return Object.values(VOCAB).flat();
+  return VOCAB[cat] || [];
+}
+
+function startQuiz() {
+  const cat = document.getElementById('quiz-category').value;
+  quizPool = [...getAllVocab(cat)];
+  for (let i = quizPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [quizPool[i], quizPool[j]] = [quizPool[j], quizPool[i]];
+  }
+  quizIndex = 0;
+  quizScore = 0;
+  quizTotal = 0;
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  if (quizIndex >= Math.min(quizPool.length, 10)) {
+    document.getElementById('quiz-question').textContent = 'Quiz complete!';
+    document.getElementById('quiz-options').innerHTML = '';
+    document.getElementById('quiz-feedback').textContent = '';
+    document.getElementById('quiz-score').textContent = `Final score: ${quizScore} / ${quizTotal}`;
+    document.getElementById('quiz-next').style.display = 'none';
+    if (authToken && quizTotal > 0) {
+      authFetch('/api/quiz/scores', {
+        method: 'POST',
+        body: JSON.stringify({
+          category: document.getElementById('quiz-category').value,
+          score: quizScore,
+          total: quizTotal,
+          direction: document.getElementById('quiz-direction').value,
+        }),
+      }).then(() => loadQuizHistory()).catch(() => {});
+    }
+    return;
+  }
+
+  const dir = document.getElementById('quiz-direction').value;
+  const correct = quizPool[quizIndex];
+  quizAnswered = false;
+
+  const allPool = getAllVocab(document.getElementById('quiz-category').value);
+  const distractors = allPool.filter(w => w.kr !== correct.kr);
+  const shuffled = distractors.sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [...shuffled, correct].sort(() => Math.random() - 0.5);
+
+  document.getElementById('quiz-question').textContent =
+    dir === 'kr-en' ? correct.kr : correct.en;
+
+  document.getElementById('quiz-options').innerHTML = options.map(opt => `
+    <button class="quiz-opt" onclick="checkAnswer(this, '${opt.kr}', '${correct.kr}')">
+      ${dir === 'kr-en' ? opt.en : opt.kr}
+    </button>
+  `).join('');
+
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('quiz-next').style.display = 'none';
+  document.getElementById('quiz-score').textContent = `Question ${quizIndex + 1} of ${Math.min(quizPool.length, 10)} • Score: ${quizScore} / ${quizTotal}`;
+}
+
+function checkAnswer(btn, chosen, correct) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  quizTotal++;
+
+  document.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    document.getElementById('quiz-feedback').textContent = '✓ Correct!';
+    document.getElementById('quiz-feedback').style.color = 'var(--green)';
+    quizScore++;
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('quiz-feedback').textContent = `✗ The answer was: ${quizPool[quizIndex].en} (${quizPool[quizIndex].rom})`;
+    document.getElementById('quiz-feedback').style.color = 'var(--red)';
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      if (b.onclick?.toString().includes(`'${correct}'`)) b.classList.add('correct');
+    });
+  }
+
+  document.getElementById('quiz-next').style.display = 'inline-block';
+  document.getElementById('quiz-score').textContent = `Question ${quizIndex + 1} of ${Math.min(quizPool.length, 10)} • Score: ${quizScore} / ${quizTotal}`;
+}
+
+function nextQuizQuestion() {
+  quizIndex++;
+  renderQuizQuestion();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════
+
+renderHangul();
+renderGrammar();
+checkAuth();
+</script>
+</body>
+</html>
